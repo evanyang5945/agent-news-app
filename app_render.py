@@ -15,11 +15,11 @@ app = Flask(__name__)
 
 # TiDB Cloud Zero 数据库配置（从环境变量读取）
 DB_CONFIG = {
-    'host': os.environ.get('TIDB_HOST', 'gateway01.us-west-2.prod.aws.tidbcloud.com'),
-    'port': int(os.environ.get('TIDB_PORT', '4000')),
-    'user': os.environ.get('TIDB_USER', ''),
-    'password': os.environ.get('TIDB_PASSWORD', ''),
-    'database': os.environ.get('TIDB_DATABASE', 'test'),
+    'host': os.environ.get('DB_HOST', 'gateway01.us-west-2.prod.aws.tidbcloud.com'),
+    'port': int(os.environ.get('DB_PORT', '4000')),
+    'user': os.environ.get('DB_USER', ''),
+    'password': os.environ.get('DB_PASSWORD', ''),
+    'database': os.environ.get('DB_DATABASE', 'test'),
     'charset': 'utf8mb4',
     'cursorclass': DictCursor,
     'autocommit': True,
