@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: agent-news-aggregator
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app_render:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: TIDB_HOST
+        value: gateway01.us-west-2.prod.aws.tidbcloud.com
+      - key: TIDB_PORT
+        value: "4000"
+      - key: TIDB_USER
+        value: 2UqG4ELucZkHn87.root
+      - key: TIDB_DATABASE
+        value: test
+      - key: TIDB_PASSWORD
+        sync: false  # 需要在 Render Dashboard 中手动设置

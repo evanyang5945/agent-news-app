@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AI Agent News Aggregator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #888; font-size: 1.1rem; }
+        .badge {
+            display: inline-block;
+            background: rgba(0,212,255,0.2);
+            color: #00d4ff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 { font-size: 1.3rem; margin-bottom: 20px; color: #00d4ff; }
+        .news-item { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .news-item:last-child { border-bottom: none; }
+        .news-item h3 { font-size: 1rem; margin-bottom: 8px; }
+        .news-item h3 a { color: #fff; text-decoration: none; }
+        .news-item h3 a:hover { color: #00d4ff; }
+        .meta { display: flex; gap: 15px; font-size: 0.85rem; color: #888; margin-bottom: 8px; flex-wrap: wrap; }
+        .source { background: rgba(0,212,255,0.2); padding: 2px 10px; border-radius: 12px; color: #00d4ff; }
+        .date { color: #666; }
+        .summary { font-size: 0.9rem; color: #aaa; line-height: 1.5; }
+        .keywords { font-size: 0.8rem; color: #7b2cbf; margin-top: 8px; }
+        .brief { line-height: 1.8; color: #ccc; }
+        .brief h1 { font-size: 1.5rem; margin-bottom: 10px; -webkit-text-fill-color: #fff; }
+        .brief h2 { font-size: 1.2rem; margin: 20px 0 10px; color: #00d4ff; }
+        .brief h3 { font-size: 1rem; margin: 15px 0 10px; color: #aaa; }
+        .brief ul { margin-left: 20px; }
+        .brief li { margin: 8px 0; }
+        .brief strong { color: #00d4ff; }
+        .footer { text-align: center; margin-top: 40px; color: #666; font-size: 0.9rem; }
+        .footer p { margin: 5px 0; }
+        .highlight { color: #00d4ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Agent News Aggregator</h1>
+            <p class="subtitle">中美热门科技网站 Agent 新闻聚合</p>
+            <span class="badge">Powered by TiDB Cloud Zero</span>
+        </header>
+        
+        <div class="grid">
+            <div class="card">
+                <h2>📰 热门新闻 TOP 10</h2>
+
+                <div class="news-item">
+                    <h3><a href="https://eu.36kr.com/zh/p/3617661153260292" target="_blank">2025年AI领域十大重磅事件盘点</a></h3>
+                    <div class="meta">
+                        <span class="source">36氪</span>
+                        <span class="date">2025-12-30 08:00:00</span>
+                    </div>
+                    <p class="summary">Manus开启Agent元年，人机协作模式迎来质变。3月，中国创业公司发布AI智能体Manus，A股AI智能体指数单日暴涨超6%。...</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://ai.plainenglish.io/i-built-a-0-dev-news-aggregator-with-n8n-bright-data-mcp-043dd19ccc38" target="_blank">I Built a /usr/bin/bash Dev News Aggregator with N8N + Bright Data MCP</a></h3>
+                    <div class="meta">
+                        <span class="source">Medium</span>
+                        <span class="date">2025-10-20 08:00:00</span>
+                    </div>
+                    <p class="summary">Building a news aggregator using n8n AI Agent nodes and Bright Data MCP to scrape TechCrunch, Dev.to, Hacker News....</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://www.huxiu.com/article/4635474.html" target="_blank">AI智能体火热，投资人又急又怕</a></h3>
+                    <div class="meta">
+                        <span class="source">虎嗅</span>
+                        <span class="date">2025-07-30 09:00:00</span>
+                    </div>
+                    <p class="summary">AI Agent成为2025年种子轮投资的首要趋势，截至2025年6月，AI Agent初创公司总共筹集到约7亿美元。MarketsandMarket预测市场规模将从2024年的51亿美元飙升到2030年的471亿美元。...</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://m.36kr.com/p/3394172757199241" target="_blank">AI Agent是2025年最大风口还是泡沫？</a></h3>
+                    <div class="meta">
+                        <span class="source">36氪</span>
+                        <span class="date">2025-07-25 17:55:00</span>
+                    </div>
+                    <p class="summary">ChatGPT正式发布ChatGPT Agent，这是一款通用型AI Agent。模型即Agent成为主流方向，xAI、Kimi、零一万物、阿里云先后推出相关产品。...</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://www.xiaoyuzhoufm.com/episode/6869e2f893fd2d72b8b98bfb" target="_blank">Vol.176 产业观察31｜从模型军备竞赛到万物皆可Agent：2025年AI agent半年回顾</a></h3>
+                    <div class="meta">
+                        <span class="source">小宇宙</span>
+                        <span class="date">2025-07-06 08:00:00</span>
+                    </div>
+                    <p class="summary">从年初DeepSeek的爆火到如今AI智能体的涌现，模型即Agent成为趋势，GMI反超并提出AIOS概念。...</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://weekly.caixin.com/2025-06-21/102333005.html" target="_blank">封面报道之二｜AI智能体来了</a></h3>
+                    <div class="meta">
+                        <span class="source">财新周刊</span>
+                        <span class="date">2025-06-21 08:00:00</span>
+                    </div>
+                    <p class="summary">MCP作为开源标准，能让AI智能体按统一的标准连接外界的数据系统。谷歌发布A2A协议，支持AI智能体相互通信、安全交换信息。...</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://www.linkedin.com/pulse/daily-news-ai-agents-key-updates-0606-codia-slashes-schwoebel-x6kze" target="_blank">Daily News in AI Agents: Key Updates 06/06</a></h3>
+                    <div class="meta">
+                        <span class="source">LinkedIn</span>
+                        <span class="date">2025-06-07 08:00:00</span>
+                    </div>
+                    <p class="summary">AI Agents for Beginners: Building Your First AI Agent. Browse over 211 things happening in AGENTS over the past 24 hours....</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://techcrunch.com/2025/05/19/devs-can-now-tap-microsoft-edge-to-power-ai-web-apps/" target="_blank">Devs can now tap Microsoft Edge to power AI web apps</a></h3>
+                    <div class="meta">
+                        <span class="source">TechCrunch</span>
+                        <span class="date">2025-05-19 09:00:00</span>
+                    </div>
+                    <p class="summary">Microsoft is launching new APIs for Edge to let developers incorporate AI functionality into web apps using Phi 4 mini model....</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://m.36kr.com/p/3153077308758535" target="_blank">2025，AI Agent还在起跑线</a></h3>
+                    <div class="meta">
+                        <span class="source">36氪</span>
+                        <span class="date">2025-02-04 08:00:00</span>
+                    </div>
+                    <p class="summary">全球科技巨头与初创公司纷纷将资源投向AI Agent，但智能体还在起跑线，行业对智能体定义的微妙重构正在进行。...</p>
+                </div>
+
+                <div class="news-item">
+                    <h3><a href="https://www.xiaoyuzhoufm.com/episode/6793cf0dd74435e4a39ac95f" target="_blank">和吴翼技术解读OpenAI Operator：推理从抽象世界走向物理世界的开端</a></h3>
+                    <div class="meta">
+                        <span class="source">小宇宙</span>
+                        <span class="date">2025-01-24 08:00:00</span>
+                    </div>
+                    <p class="summary">2025刚开年，全球AI界高度共识将25年定义为智能体元年。OpenAI发布首个智能体产品Operator，打响全球智能体竞赛第一枪。...</p>
+                </div>
+
+            </div>
+            
+            <div class="card">
+                <h2>📊 每日简报</h2>
+                <div class="brief">
+<h1>🤖 AI Agent 每日简报<br><br>📅 2026年03月05日<br>📊 共收录 10 条热门新闻<br><br>---<br><br>#<h1>🔥 热门关键词<br>**AI Agent** (6), **Manus** (2), **DeepSeek** (2), **MCP** (2), **OpenAI** (2)<br><br>#<h1>📰 精选新闻<br><br>##<h1>国内媒体<br>• **[2025年AI领域十大重磅事件盘点](https://eu.36kr.com/zh/p/3617661153260292)** • 36氪<br>• **[I Built a /usr/bin/bash Dev News Aggregator with N8N + Bright Data MCP](https://ai.plainenglish.io/i-built-a-0-dev-news-aggregator-with-n8n-bright-data-mcp-043dd19ccc38)** • Medium<br>• **[Vol.176 产业观察31｜从模型军备竞赛到万物皆可Agent：2025年AI agent半年回顾](https://www.xiaoyuzhoufm.com/episode/6869e2f893fd2d72b8b98bfb)** • 小宇宙<br><br>##<h1>国际媒体<br>• **[AI智能体火热，投资人又急又怕](https://www.huxiu.com/article/4635474.html)** • 虎嗅<br>• **[Daily News in AI Agents: Key Updates 06/06](https://www.linkedin.com/pulse/daily-news-ai-agents-key-updates-0606-codia-slashes-schwoebel-x6kze)** • LinkedIn<br><br>---<br><br>#<h1>💡 趋势摘要<br><br>今日 AI Agent 领域动态活跃，主要关注：<br><br>1. **投资热度**: AI Agent 成为2025年种子轮投资首要趋势，上半年初创公司共筹集约7亿美元<br><br>2. **产品进展**: OpenAI发布Operator打响智能体竞赛第一枪，Manus开启Agent元年<br><br>3. **技术协议**: MCP和A2A协议推动Agent互操作性，谷歌、微软等巨头纷纷支持<br><br>4. **国内市场**: 月之暗面、阿里、零一万物等国内公司押注模型即Agent概念<br><br>5. **市场规模**: 预测AI Agent市场将从2024年的51亿美元增长到2030年的471亿美元<br><br>---<br><br>数据来源: TechCrunch, 36氪, 虎嗅, 财新周刊, 小宇宙<br>数据库: TiDB Cloud Zero<br>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>数据来源: <span class="highlight">TechCrunch, The Verge, 36氪, 虎嗅, 财新周刊</span></p>
+            <p>数据库: <span class="highlight">TiDB Cloud Zero</span> | 30天有效期 | 向量搜索 + 全文索引</p>
+            <p>创建于: 2026-03-05 | 实例ID: jLAPJzVcMUfxioCtHgFBs7JTgwo5P6px</p>
+        </div>
+    </div>
+</body>
+</html>
