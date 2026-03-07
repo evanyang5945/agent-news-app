@@ -6,6 +6,7 @@ AI Agent News Aggregator - Render 部署版本
 
 import os
 import json
+import re
 from datetime import datetime
 from flask import Flask, render_template_string, jsonify
 import pymysql
@@ -29,6 +30,24 @@ DB_CONFIG = {
 def get_db():
     """获取数据库连接"""
     return pymysql.connect(**DB_CONFIG)
+
+def simplify_brief(content):
+    """简化简报格式为一段文字"""
+    if not content:
+        return "今日暂无简报。"
+    
+    # 移除 Markdown 标记
+    text = re.sub(r'#+\s*', '', content)  # 移除标题标记
+    text = re.sub(r'\*\*', '', text)  # 移除加粗
+    text = re.sub(r'---', '', text)  # 移除分隔线
+    text = re.sub(r'\n+', ' ', text)  # 多行换行变成空格
+    text = re.sub(r'\s+', ' ', text)  # 多个空格合并
+    
+    # 提取简报部分（在"详细内容"之前）
+    if "详细内容" in text:
+        text = text.split("详细内容")[0]
+    
+    return text.strip()
 
 @app.route('/')
 def index():
@@ -62,10 +81,13 @@ def index():
             sources = cursor.fetchall()
         conn.close()
         
+        # 简化简报内容
+        brief_text = simplify_brief(brief['content'] if brief else None)
+        
         # 渲染页面
         return render_template_string(HTML_TEMPLATE, 
                                      news=news, 
-                                     brief=brief,
+                                     brief=brief_text,
                                      total=total,
                                      sources=sources,
                                      now=datetime.now())
@@ -119,265 +141,169 @@ def health():
     """健康检查"""
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()})
 
-# HTML 模板
+# HTML 模板 - 响应式/H5友好
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 AI Agent News Aggregator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Agent News</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0d1b2a;
             color: #fff;
             min-height: 100vh;
             line-height: 1.6;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            -webkit-text-size-adjust: 100%;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        header { text-align: center; margin-bottom: 50px; }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 1rem; 
+        }
+        header { 
+            text-align: center; 
+            margin-bottom: 1.5rem; 
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
         h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            background: linear-gradient(90deg, #00b4d8, #0077b6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 15px;
-            letter-spacing: -1px;
-        }
-        .subtitle { color: #a0a0a0; font-size: 1.2rem; font-weight: 300; }
-        .badge {
-            display: inline-block;
-            background: rgba(0, 180, 216, 0.15);
-            color: #00b4d8;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            margin-top: 15px;
-            border: 1px solid rgba(0, 180, 216, 0.3);
-        }
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin: 30px 0;
-            flex-wrap: wrap;
-        }
-        .stat-item {
-            text-align: center;
-            padding: 15px 30px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .stat-value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #00b4d8;
+            margin-bottom: 0.3rem;
         }
-        .stat-label { font-size: 0.9rem; color: #888; margin-top: 5px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-        .card {
-            background: rgba(255,255,255,0.03);
-            border-radius: 20px;
-            padding: 30px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        .subtitle { 
+            color: #888; 
+            font-size: 0.85rem; 
         }
-        .card h2 {
-            font-size: 1.4rem;
-            margin-bottom: 25px;
-            color: #00b4d8;
+        .stats {
             display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .news-item {
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            transition: all 0.3s ease;
-        }
-        .news-item:hover {
-            background: rgba(255,255,255,0.02);
-            margin: 0 -15px;
-            padding: 20px 15px;
-            border-radius: 10px;
-        }
-        .news-item:last-child { border-bottom: none; }
-        .news-item h3 {
-            font-size: 1.05rem;
-            font-weight: 500;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-        .news-item h3 a {
-            color: #fff;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .news-item h3 a:hover { color: #00b4d8; }
-        .meta {
-            display: flex;
-            gap: 12px;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
             font-size: 0.8rem;
-            color: #888;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .source {
-            background: linear-gradient(135deg, rgba(0,180,216,0.2), rgba(0,119,182,0.2));
-            padding: 3px 12px;
-            border-radius: 15px;
-            color: #00b4d8;
-            font-weight: 500;
-        }
-        .date { color: #666; }
-        .summary {
-            font-size: 0.9rem;
-            color: #aaa;
-            line-height: 1.6;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .keywords {
-            font-size: 0.75rem;
-            color: #0077b6;
-            margin-top: 10px;
-            font-weight: 500;
-        }
-        .brief-section {
-            background: rgba(0,0,0,0.2);
-            border-radius: 15px;
-            padding: 25px;
-            line-height: 1.9;
-        }
-        .brief-section h1 {
-            font-size: 1.6rem;
-            margin-bottom: 15px;
-            -webkit-text-fill-color: #fff;
-            background: none;
-        }
-        .brief-section h2 {
-            font-size: 1.2rem;
-            margin: 25px 0 15px;
-            color: #00b4d8;
-        }
-        .brief-section h3 {
-            font-size: 1.05rem;
-            margin: 20px 0 10px;
-            color: #ccc;
-        }
-        .brief-section ul, .brief-section ol {
-            margin: 15px 0 15px 25px;
-        }
-        .brief-section li { margin: 8px 0; color: #bbb; }
-        .brief-section strong { color: #00b4d8; }
-        .brief-section p { margin: 12px 0; color: #bbb; }
-        .footer {
-            text-align: center;
-            margin-top: 60px;
-            padding: 30px;
-            color: #555;
-            font-size: 0.9rem;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .footer p { margin: 8px 0; }
-        .highlight { color: #00b4d8; }
-        .pulse {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #00ff88;
-            border-radius: 50%;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,0.4); }
-            70% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(0,255,136,0); }
-            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,0); }
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
             color: #666;
         }
-        .empty-state-icon { font-size: 3rem; margin-bottom: 15px; }
+        .stat span { color: #00b4d8; font-weight: 600; }
+        
+        /* 简报部分 */
+        .brief-card {
+            background: rgba(0,180,216,0.1);
+            border: 1px solid rgba(0,180,216,0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .brief-card h2 {
+            font-size: 1rem;
+            color: #00b4d8;
+            margin-bottom: 0.5rem;
+        }
+        .brief-content {
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.7;
+        }
+        
+        /* 新闻列表 */
+        .news-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        .news-card h2 {
+            font-size: 1rem;
+            color: #00b4d8;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .news-item {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .news-item:last-child { border-bottom: none; }
+        .news-title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+            line-height: 1.5;
+        }
+        .news-title a {
+            color: #fff;
+            text-decoration: none;
+        }
+        .news-title a:hover { color: #00b4d8; }
+        .news-meta {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        .news-meta .source {
+            color: #00b4d8;
+            margin-right: 0.5rem;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 2rem;
+            color: #555;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            font-size: 0.75rem;
+            color: #444;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🤖 AI Agent News Aggregator</h1>
-            <p class="subtitle">中美热门科技网站 Agent 新闻聚合</p>
-            
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <div class="stat-value">{{ total }}</div>
-                    <div class="stat-label">新闻总数</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ sources|length }}</div>
-                    <div class="stat-label">数据来源</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ now.strftime('%m/%d') }}</div>
-                    <div class="stat-label">最后更新</div>
-                </div>
+            <h1>🤖 AI Agent News</h1>
+            <p class="subtitle">每日 AI Agent 新闻聚合</p>
+            <div class="stats">
+                <div class="stat">今日 <span>{{ total }}</span> 条</div>
+                <div class="stat">来源 <span>{{ sources|length }}</span></div>
+                <div class="stat">{{ now.strftime('%m/%d') }}</div>
             </div>
         </header>
         
-        <div class="grid">
-            <div class="card">
-                <h2>📰 热门新闻 TOP 10</h2>
-                {% if news %}
-                    {% for item in news %}
-                    <div class="news-item">
-                        <h3><a href="{{ item.link }}" target="_blank" rel="noopener">{{ item.title }}</a></h3>
-                        <div class="meta">
-                            <span class="source">{{ item.source }}</span>
-                            <span class="date">{{ item.published_at.strftime('%Y-%m-%d') if item.published_at else '未知' }}</span>
-                        </div>
-                        <p class="summary">{{ item.summary[:120] if item.summary else '' }}...</p>
-                        {% if item.keywords %}
-                        <div class="keywords">🏷️ {{ item.keywords }}</div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <p>暂无新闻数据</p>
-                    </div>
-                {% endif %}
-            </div>
-            
-            <div class="card">
-                <h2>📊 每日简报</h2>
-                <div class="brief-section">
-                    {% if brief %}
-                        {{ brief.content|replace('\n', '<br>')|replace('# ', '<h1>')|replace('## ', '<h2>')|replace('- ', '• ')|safe }}
-                    {% else %}
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📝</div>
-                            <p>暂无简报，请先运行数据抓取</p>
-                        </div>
-                    {% endif %}
-                </div>
+        <div class="brief-card">
+            <h2>📋 今日简报</h2>
+            <div class="brief-content">
+                {{ brief }}
             </div>
         </div>
         
+        <div class="news-card">
+            <h2>📰 今日新闻</h2>
+            {% if news %}
+                {% for item in news %}
+                <div class="news-item">
+                    <div class="news-title">
+                        <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
+                    </div>
+                    <div class="news-meta">
+                        <span class="source">{{ item.source }}</span>
+                        <span>{{ item.published_at.strftime('%m-%d %H:%M') if item.published_at else '' }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">今日暂无新闻</div>
+            {% endif %}
+        </div>
+        
         <div class="footer">
-            <p>数据来源: <span class="highlight">TechCrunch, The Verge, 36氪, 虎嗅, 财新周刊, 小宇宙</span></p>
-            <p>构建时间: {{ now.strftime('%Y-%m-%d %H:%M') }} | Render 云端部署</p>
+            {{ now.strftime('%Y-%m-%d') }} 更新
         </div>
     </div>
 </body>
