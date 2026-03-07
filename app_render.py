@@ -121,7 +121,7 @@ HTML_TEMPLATE = '''
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
             color: #fff;
             min-height: 100vh;
             line-height: 1.6;
@@ -131,7 +131,7 @@ HTML_TEMPLATE = '''
         h1 {
             font-size: 3rem;
             font-weight: 800;
-            background: linear-gradient(90deg, #00f5ff, #b829dd, #ff006e);
+            background: linear-gradient(90deg, #00b4d8, #0077b6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -141,13 +141,13 @@ HTML_TEMPLATE = '''
         .subtitle { color: #a0a0a0; font-size: 1.2rem; font-weight: 300; }
         .badge {
             display: inline-block;
-            background: rgba(0, 245, 255, 0.15);
-            color: #00f5ff;
+            background: rgba(0, 180, 216, 0.15);
+            color: #00b4d8;
             padding: 6px 16px;
             border-radius: 20px;
             font-size: 0.85rem;
             margin-top: 15px;
-            border: 1px solid rgba(0, 245, 255, 0.3);
+            border: 1px solid rgba(0, 180, 216, 0.3);
         }
         .stats-bar {
             display: flex;
@@ -166,7 +166,7 @@ HTML_TEMPLATE = '''
         .stat-value {
             font-size: 2rem;
             font-weight: 700;
-            color: #00f5ff;
+            color: #00b4d8;
         }
         .stat-label { font-size: 0.9rem; color: #888; margin-top: 5px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
@@ -182,7 +182,7 @@ HTML_TEMPLATE = '''
         .card h2 {
             font-size: 1.4rem;
             margin-bottom: 25px;
-            color: #00f5ff;
+            color: #00b4d8;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -210,7 +210,7 @@ HTML_TEMPLATE = '''
             text-decoration: none;
             transition: color 0.2s;
         }
-        .news-item h3 a:hover { color: #00f5ff; }
+        .news-item h3 a:hover { color: #00b4d8; }
         .meta {
             display: flex;
             gap: 12px;
@@ -221,10 +221,10 @@ HTML_TEMPLATE = '''
             align-items: center;
         }
         .source {
-            background: linear-gradient(135deg, rgba(0,245,255,0.2), rgba(184,41,221,0.2));
+            background: linear-gradient(135deg, rgba(0,180,216,0.2), rgba(0,119,182,0.2));
             padding: 3px 12px;
             border-radius: 15px;
-            color: #00f5ff;
+            color: #00b4d8;
             font-weight: 500;
         }
         .date { color: #666; }
@@ -239,7 +239,7 @@ HTML_TEMPLATE = '''
         }
         .keywords {
             font-size: 0.75rem;
-            color: #b829dd;
+            color: #0077b6;
             margin-top: 10px;
             font-weight: 500;
         }
@@ -258,7 +258,7 @@ HTML_TEMPLATE = '''
         .brief-section h2 {
             font-size: 1.2rem;
             margin: 25px 0 15px;
-            color: #00f5ff;
+            color: #00b4d8;
         }
         .brief-section h3 {
             font-size: 1.05rem;
@@ -269,7 +269,7 @@ HTML_TEMPLATE = '''
             margin: 15px 0 15px 25px;
         }
         .brief-section li { margin: 8px 0; color: #bbb; }
-        .brief-section strong { color: #00f5ff; }
+        .brief-section strong { color: #00b4d8; }
         .brief-section p { margin: 12px 0; color: #bbb; }
         .footer {
             text-align: center;
@@ -280,7 +280,7 @@ HTML_TEMPLATE = '''
             border-top: 1px solid rgba(255,255,255,0.05);
         }
         .footer p { margin: 8px 0; }
-        .highlight { color: #00f5ff; }
+        .highlight { color: #00b4d8; }
         .pulse {
             display: inline-block;
             width: 8px;
@@ -308,7 +308,6 @@ HTML_TEMPLATE = '''
         <header>
             <h1>🤖 AI Agent News Aggregator</h1>
             <p class="subtitle">中美热门科技网站 Agent 新闻聚合</p>
-            <span class="badge"><span class="pulse"></span>Powered by TiDB Cloud Zero</span>
             
             <div class="stats-bar">
                 <div class="stat-item">
@@ -368,7 +367,6 @@ HTML_TEMPLATE = '''
         
         <div class="footer">
             <p>数据来源: <span class="highlight">TechCrunch, The Verge, 36氪, 虎嗅, 财新周刊, 小宇宙</span></p>
-            <p>数据库: <span class="highlight">TiDB Cloud Zero</span> | 30天有效期 | Serverless MySQL</p>
             <p>构建时间: {{ now.strftime('%Y-%m-%d %H:%M') }} | Render 云端部署</p>
         </div>
     </div>
