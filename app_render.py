@@ -32,16 +32,14 @@ def get_db():
     return pymysql.connect(**DB_CONFIG)
 
 def simplify_brief(content):
-    """简化简报格式为一段文字"""
+    """简化简报格式，保留换行"""
     if not content:
         return "今日暂无简报。"
     
-    # 移除 Markdown 标记
+    # 只移除 Markdown 标记，保留换行
     text = re.sub(r'#+\s*', '', content)  # 移除标题标记
     text = re.sub(r'\*\*', '', text)  # 移除加粗
     text = re.sub(r'---', '', text)  # 移除分隔线
-    text = re.sub(r'\n+', ' ', text)  # 多行换行变成空格
-    text = re.sub(r'\s+', ' ', text)  # 多个空格合并
     
     # 提取简报部分（在"详细内容"之前）
     if "详细内容" in text:
@@ -210,6 +208,7 @@ HTML_TEMPLATE = '''
             font-size: 0.9rem;
             color: #ccc;
             line-height: 1.7;
+            white-space: pre-line;
         }
         
         /* 新闻列表 */
