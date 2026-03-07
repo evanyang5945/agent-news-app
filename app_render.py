@@ -36,19 +36,29 @@ def index():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            # 获取最新10条新闻
-            cursor.execute('SELECT * FROM agent_news ORDER BY published_at DESC LIMIT 10')
+            # 获取今天的新闻（只显示当天）
+            cursor.execute('''
+                SELECT * FROM agent_news 
+                WHERE DATE(published_at) = CURDATE()
+                ORDER BY published_at DESC 
+                LIMIT 10
+            ''')
             news = cursor.fetchall()
             
             # 获取今日简报
             cursor.execute('SELECT * FROM daily_brief WHERE brief_date = CURDATE()')
             brief = cursor.fetchone()
             
-            # 获取统计
-            cursor.execute('SELECT COUNT(*) as total FROM agent_news')
+            # 获取今天的新闻统计
+            cursor.execute('SELECT COUNT(*) as total FROM agent_news WHERE DATE(published_at) = CURDATE()')
             total = cursor.fetchone()['total']
             
-            cursor.execute('SELECT source, COUNT(*) as cnt FROM agent_news GROUP BY source')
+            cursor.execute('''
+                SELECT source, COUNT(*) as cnt 
+                FROM agent_news 
+                WHERE DATE(published_at) = CURDATE()
+                GROUP BY source
+            ''')
             sources = cursor.fetchall()
         conn.close()
         
