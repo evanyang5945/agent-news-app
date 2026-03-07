@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
 AI Agent News Aggregator - Render 部署版本
-基于 TiDB Cloud Zero 的中美科技新闻聚合应用
+支持历史日期浏览
 """
 
 import os
 import json
 import re
-from datetime import datetime
-from flask import Flask, render_template_string, jsonify
+from datetime import datetime, timedelta
+from flask import Flask, render_template_string, jsonify, request
 import pymysql
 from pymysql.cursors import DictCursor
 
 app = Flask(__name__)
 
-# TiDB Cloud Zero 数据库配置（从环境变量读取）
+# TiDB Cloud Zero 数据库配置
 DB_CONFIG = {
     'host': os.environ.get('DB_HOST', 'gateway01.us-west-2.prod.aws.tidbcloud.com'),
     'port': int(os.environ.get('DB_PORT', '4000')),
@@ -32,51 +32,95 @@ def get_db():
     return pymysql.connect(**DB_CONFIG)
 
 def simplify_brief(content):
-    """简化简报格式，保留换行"""
+    """简化简报格式"""
     if not content:
-        return "今日暂无简报。"
+        return None
     
     # 只移除 Markdown 标记，保留换行
-    text = re.sub(r'#+\s*', '', content)  # 移除标题标记
-    text = re.sub(r'\*\*', '', text)  # 移除加粗
-    text = re.sub(r'---', '', text)  # 移除分隔线
+    text = re.sub(r'#+\s*', '', content)
+    text = re.sub(r'\*\*', '', text)
+    text = re.sub(r'---', '', text)
     
-    # 提取简报部分（在"详细内容"之前）
     if "详细内容" in text:
         text = text.split("详细内容")[0]
     
     return text.strip()
 
-@app.route('/')
-def index():
-    """主页 - 展示新闻列表和简报"""
+def get_available_dates():
+    """获取有数据的所有日期"""
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            # 获取今天的新闻（只显示当天）
+            cursor.execute('''
+                SELECT DISTINCT DATE(published_at) as date 
+                FROM agent_news 
+                ORDER BY date DESC
+            ''')
+            dates = [row['date'].strftime('%Y-%m-%d') for row in cursor.fetchall()]
+        conn.close()
+        return dates
+    except:
+        return []
+
+@app.route('/')
+def index():
+    """主页 - 支持日期参数"""
+    # 获取日期参数，默认为今天
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    
+    try:
+        current_date = datetime.strptime(date_str, '%Y-%m-%d')
+    except:
+        current_date = datetime.now()
+        date_str = current_date.strftime('%Y-%m-%d')
+    
+    # 计算上一天和下一天
+    prev_date = (current_date - timedelta(days=1)).strftime('%Y-%m-%d')
+    next_date = (current_date + timedelta(days=1)).strftime('%Y-%m-%d')
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # 检查是否有下一天的数据
+    has_next = next_date <= today
+    
+    try:
+        conn = get_db()
+        with conn.cursor() as cursor:
+            # 获取指定日期的新闻
             cursor.execute('''
                 SELECT * FROM agent_news 
-                WHERE DATE(published_at) = CURDATE()
+                WHERE DATE(published_at) = %s
                 ORDER BY published_at DESC 
                 LIMIT 10
-            ''')
+            ''', (date_str,))
             news = cursor.fetchall()
             
-            # 获取今日简报
-            cursor.execute('SELECT * FROM daily_brief WHERE brief_date = CURDATE()')
+            # 获取指定日期的简报
+            cursor.execute('SELECT * FROM daily_brief WHERE brief_date = %s', (date_str,))
             brief = cursor.fetchone()
             
-            # 获取今天的新闻统计
-            cursor.execute('SELECT COUNT(*) as total FROM agent_news WHERE DATE(published_at) = CURDATE()')
+            # 获取统计
+            cursor.execute('''
+                SELECT COUNT(*) as total FROM agent_news 
+                WHERE DATE(published_at) = %s
+            ''', (date_str,))
             total = cursor.fetchone()['total']
             
             cursor.execute('''
                 SELECT source, COUNT(*) as cnt 
                 FROM agent_news 
-                WHERE DATE(published_at) = CURDATE()
+                WHERE DATE(published_at) = %s
                 GROUP BY source
-            ''')
+            ''', (date_str,))
             sources = cursor.fetchall()
+            
+            # 获取有数据的所有日期
+            cursor.execute('''
+                SELECT DISTINCT DATE(published_at) as date 
+                FROM agent_news 
+                ORDER BY date DESC
+                LIMIT 30
+            ''')
+            available_dates = [row['date'].strftime('%Y-%m-%d') for row in cursor.fetchall()]
         conn.close()
         
         # 简化简报内容
@@ -84,53 +128,58 @@ def index():
         
         # 渲染页面
         return render_template_string(HTML_TEMPLATE, 
-                                     news=news, 
+                                     news=news,
                                      brief=brief_text,
                                      total=total,
                                      sources=sources,
+                                     current_date=date_str,
+                                     prev_date=prev_date,
+                                     next_date=next_date,
+                                     has_next=has_next,
+                                     today=today,
+                                     available_dates=available_dates,
                                      now=datetime.now())
     except Exception as e:
-        return f"<h1>数据库连接错误</h1><p>{str(e)}</p><p>请检查环境变量配置</p>", 500
+        return f"<h1>数据库连接错误</h1><p>{str(e)}</p>", 500
 
 @app.route('/api/news')
 def api_news():
     """API: 获取新闻列表"""
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            cursor.execute('SELECT * FROM agent_news ORDER BY published_at DESC LIMIT 20')
+            cursor.execute('''
+                SELECT * FROM agent_news 
+                WHERE DATE(published_at) = %s
+                ORDER BY published_at DESC
+            ''', (date_str,))
             news = cursor.fetchall()
         conn.close()
-        return jsonify({'data': news})
+        return jsonify({'data': news, 'date': date_str})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/brief')
 def api_brief():
     """API: 获取简报"""
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            cursor.execute('SELECT * FROM daily_brief WHERE brief_date = CURDATE()')
+            cursor.execute('SELECT * FROM daily_brief WHERE brief_date = %s', (date_str,))
             brief = cursor.fetchone()
         conn.close()
-        return jsonify({'data': brief})
+        return jsonify({'data': brief, 'date': date_str})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/stats')
-def api_stats():
-    """API: 获取统计"""
+@app.route('/api/dates')
+def api_dates():
+    """API: 获取有数据的所有日期"""
     try:
-        conn = get_db()
-        with conn.cursor() as cursor:
-            cursor.execute('SELECT COUNT(*) as total FROM agent_news')
-            total = cursor.fetchone()['total']
-            
-            cursor.execute('SELECT source, COUNT(*) as cnt FROM agent_news GROUP BY source')
-            by_source = cursor.fetchall()
-        conn.close()
-        return jsonify({'total': total, 'by_source': by_source})
+        dates = get_available_dates()
+        return jsonify({'dates': dates})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -139,7 +188,7 @@ def health():
     """健康检查"""
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()})
 
-# HTML 模板 - 响应式/H5友好
+# HTML 模板 - 支持日期导航
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -167,7 +216,7 @@ HTML_TEMPLATE = '''
         }
         header { 
             text-align: center; 
-            margin-bottom: 1.5rem; 
+            margin-bottom: 1rem; 
             padding: 1rem 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
@@ -181,6 +230,56 @@ HTML_TEMPLATE = '''
             color: #888; 
             font-size: 0.85rem; 
         }
+        
+        /* 日期导航 */
+        .date-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        .date-nav a {
+            color: #00b4d8;
+            text-decoration: none;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid rgba(0,180,216,0.3);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .date-nav a:hover {
+            background: rgba(0,180,216,0.1);
+        }
+        .date-nav a.disabled {
+            color: #444;
+            border-color: #333;
+            pointer-events: none;
+        }
+        .current-date {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            background: rgba(0,180,216,0.2);
+            border-radius: 6px;
+            min-width: 100px;
+            text-align: center;
+        }
+        .date-picker {
+            margin-top: 0.5rem;
+            padding: 0.4rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .date-picker option {
+            background: #1b263b;
+        }
+        
         .stats {
             display: flex;
             justify-content: center;
@@ -209,6 +308,11 @@ HTML_TEMPLATE = '''
             color: #ccc;
             line-height: 1.7;
             white-space: pre-line;
+        }
+        .no-content {
+            color: #666;
+            font-style: italic;
+            padding: 1rem 0;
         }
         
         /* 新闻列表 */
@@ -268,22 +372,45 @@ HTML_TEMPLATE = '''
         <header>
             <h1>🤖 AI Agent News</h1>
             <p class="subtitle">每日 AI Agent 新闻聚合</p>
+            
+            <!-- 日期导航 -->
+            <div class="date-nav">
+                <a href="/?date={{ prev_date }}">◀ 上一天</a>
+                <span class="current-date">{{ current_date }}</span>
+                {% if has_next %}
+                <a href="/?date={{ next_date }}">下一天 ▶</a>
+                {% else %}
+                <a class="disabled">下一天 ▶</a>
+                {% endif %}
+            </div>
+            
+            <!-- 日期选择器 -->
+            <select class="date-picker" onchange="window.location.href='/?date=' + this.value">
+                <option value="">选择日期...</option>
+                {% for d in available_dates %}
+                <option value="{{ d }}" {% if d == current_date %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+            
             <div class="stats">
-                <div class="stat">今日 <span>{{ total }}</span> 条</div>
-                <div class="stat">来源 <span>{{ sources|length }}</span></div>
-                <div class="stat">{{ now.strftime('%m/%d') }}</div>
+                <div class="stat"><span>{{ total }}</span> 条新闻</div>
+                <div class="stat"><span>{{ sources|length }}</span> 个来源</div>
             </div>
         </header>
         
+        <!-- 简报 -->
         <div class="brief-card">
-            <h2>📋 今日简报</h2>
-            <div class="brief-content">
-                {{ brief }}
-            </div>
+            <h2>📋 简报</h2>
+            {% if brief %}
+            <div class="brief-content">{{ brief }}</div>
+            {% else %}
+            <div class="no-content">{{ current_date }} 暂无简报内容</div>
+            {% endif %}
         </div>
         
+        <!-- 新闻列表 -->
         <div class="news-card">
-            <h2>📰 今日新闻</h2>
+            <h2>📰 新闻列表</h2>
             {% if news %}
                 {% for item in news %}
                 <div class="news-item">
@@ -297,12 +424,12 @@ HTML_TEMPLATE = '''
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="empty">今日暂无新闻</div>
+                <div class="empty">{{ current_date }} 没有抓到新闻内容</div>
             {% endif %}
         </div>
         
         <div class="footer">
-            {{ now.strftime('%Y-%m-%d') }} 更新
+            {% if current_date == today %}今天{% else %}{{ current_date }}{% endif %}更新
         </div>
     </div>
 </body>
