@@ -46,6 +46,10 @@ def search_tavily(query, days_back=1, max_retries=3):
     """调用 Tavily API 搜索，带重试"""
     url = "https://api.tavily.com/search"
     
+    # time_range: day, week, month, year
+    time_range_map = {1: "day", 7: "week", 30: "month", 365: "year"}
+    time_range = time_range_map.get(days_back, "day")
+    
     payload = {
         "api_key": TAVILY_API_KEY,
         "query": query,
@@ -54,7 +58,7 @@ def search_tavily(query, days_back=1, max_retries=3):
         "include_images": False,
         "include_raw_content": True,
         "max_results": 10,
-        "time_range": f"d{days_back}"
+        "time_range": time_range
     }
     
     for attempt in range(max_retries):
