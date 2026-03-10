@@ -14,6 +14,14 @@ from pymysql.cursors import DictCursor
 
 app = Flask(__name__)
 
+# 时区修复：强制使用北京时间
+def get_beijing_now():
+    """获取北京时间"""
+    from datetime import timezone
+    utc_now = datetime.now(timezone.utc)
+    beijing_tz = timezone(timedelta(hours=8))
+    return utc_now.astimezone(beijing_tz).replace(tzinfo=None)
+
 # TiDB Cloud Zero 数据库配置
 DB_CONFIG = {
     'host': os.environ.get('DB_HOST', 'gateway01.us-west-2.prod.aws.tidbcloud.com'),
@@ -65,19 +73,19 @@ def get_available_dates():
 @app.route('/')
 def index():
     """主页 - 支持日期参数"""
-    # 获取日期参数，默认为今天
-    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    # 获取日期参数，默认为今天（北京时间）
+    date_str = request.args.get('date', get_beijing_now().strftime('%Y-%m-%d'))
     
     try:
         current_date = datetime.strptime(date_str, '%Y-%m-%d')
     except:
-        current_date = datetime.now()
+        current_date = get_beijing_now()
         date_str = current_date.strftime('%Y-%m-%d')
     
     # 计算上一天和下一天
     prev_date = (current_date - timedelta(days=1)).strftime('%Y-%m-%d')
     next_date = (current_date + timedelta(days=1)).strftime('%Y-%m-%d')
-    today = datetime.now().strftime('%Y-%m-%d')
+    today = get_beijing_now().strftime('%Y-%m-%d')
     
     # 检查是否有下一天的数据
     has_next = next_date <= today
@@ -138,14 +146,14 @@ def index():
                                      has_next=has_next,
                                      today=today,
                                      available_dates=available_dates,
-                                     now=datetime.now())
+                                     now=get_beijing_now())
     except Exception as e:
         return f"<h1>数据库连接错误</h1><p>{str(e)}</p>", 500
 
 @app.route('/api/news')
 def api_news():
     """API: 获取新闻列表"""
-    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    date_str = request.args.get('date', get_beijing_now().strftime('%Y-%m-%d'))
     try:
         conn = get_db()
         with conn.cursor() as cursor:
@@ -163,7 +171,7 @@ def api_news():
 @app.route('/api/brief')
 def api_brief():
     """API: 获取简报"""
-    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    date_str = request.args.get('date', get_beijing_now().strftime('%Y-%m-%d'))
     try:
         conn = get_db()
         with conn.cursor() as cursor:
@@ -186,7 +194,7 @@ def api_dates():
 @app.route('/health')
 def health():
     """健康检查"""
-    return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()})
+    return jsonify({'status': 'ok', 'timestamp': get_beijing_now().isoformat()})
 
 # HTML 模板 - 支持日期导航
 HTML_TEMPLATE = '''
